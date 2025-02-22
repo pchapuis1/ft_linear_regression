@@ -1,6 +1,6 @@
 
 theta0 = 1
-theta1 = 4
+theta1 = 1
 
 
 valid_input = False
