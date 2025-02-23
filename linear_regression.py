@@ -2,14 +2,10 @@ import csv
 import sys
 import matplotlib.pyplot as plt
 
-theta0 = 0
-theta1 = 0
-
-learningRate = 0.00000001
-
+min_x = 0
 max_x = 0
+min_y = 0
 max_y = 0
-
 
 def get_data():
 
@@ -38,42 +34,85 @@ def get_data():
             sys.exit
     return data
 
-def estimatedPrice(x):
-    return (theta0 + theta1 * x)
+def estimatedPrice(mileage):
+    return theta0 + theta1 * mileage
 
-epochs = 1000
+def get_min_max(data):
+    global min_x, max_x, min_y, max_y
+
+    min_x = max_x = data[0][0]
+    min_y = max_y = data[0][1]
+
+    for mileage, price in data:
+
+        if (mileage > max_x):
+            max_x = mileage
+        if (price > max_y):
+            max_y = price
+        if (mileage < min_x):
+            min_x = mileage
+        if (price < min_y):
+            min_y = price
+
+def normalizeData(data):
+    data_normalized = []
+
+    for mileage, price in data:
+        mileage_normalized = (mileage - min_x) / (max_x - min_x)
+        price_normalized = (price - min_y) / (max_y - min_y)
+        data_normalized.append((mileage_normalized, price_normalized))    
+
+    return data_normalized
+
+
+
+theta0 = 0
+theta1 = 0
+
+learningRate = 0.01
+nb_iterations = 10000
+
+history_loss = []
 
 def linear_regression(data):
     global theta0, theta1, learningRate
     m = len(data)
 
-    for _ in range(epochs):
+    for i in range(nb_iterations):
         tmp0 = 0
         tmp1 = 0
-        for line in data:
-            mileage, price = line
+        error_history = 0
+
+        for mileage, price in data:
             error = estimatedPrice(mileage) - price
             tmp0 += error
             tmp1 += error * mileage
 
+            error_history += error * error
+
+        history_loss.append((i, error_history))
+
         theta0 -= learningRate * (tmp0 / m)
         theta1 -= learningRate * (tmp1 / m)
-        print("theta0:", theta0, " theta1:", theta1)
-
-
-    print("theta0:", theta0, " theta1:", theta1)
         
+def denormalizeTheta():
+    global theta0, theta1
+    theta1 = theta1 * ((max_y - min_y) / (max_x - min_x))
+    theta0 = theta0 * (max_y - min_y) - theta1 * min_x + min_y
+    print("theta0:", theta0, " theta1:", theta1)
 
 
-def get_min_max(data):
-    global max_x, max_y
+def show_loss_graph(history_loss):
+    iterations, losses = zip(*history_loss)
+    plt.plot(iterations, losses, 'b-', label="Loss Curve")
 
-    for line in data:
-        km, price = line
-        if (km > max_x):
-            max_x = km
-        if (price > max_y):
-            max_y = price
+    plt.xlabel("Iterations")
+    plt.ylabel("Loss Value")
+    plt.title("Evolution of the loss value through the iterations")
+    plt.legend()
+    plt.show()
+    plt.close()
+
 
 def show_graph(data):
     
@@ -96,7 +135,13 @@ def show_graph(data):
 if __name__ == "__main__":
     data = get_data()
 
-    linear_regression(data)
     get_min_max(data)
+    data_normalized = normalizeData(data)
+
+    linear_regression(data_normalized)
+    
+    denormalizeTheta()
+
     show_graph(data)
+    show_loss_graph(history_loss)
 
