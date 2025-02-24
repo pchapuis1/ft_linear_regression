@@ -78,6 +78,9 @@ def linear_regression(data):
     global theta0, theta1, learningRate
     m = len(data)
 
+    prv_error_history = 1000
+    limit = 1e-6
+
     for i in range(nb_iterations):
         tmp0 = 0
         tmp1 = 0
@@ -90,6 +93,10 @@ def linear_regression(data):
 
             error_history += error * error
 
+        print("progression of error:", prv_error_history - error_history)
+        if abs(prv_error_history - error_history) < limit:
+            break
+        prv_error_history = error_history
         history_loss.append((i, error_history))
 
         theta0 -= learningRate * (tmp0 / m)
@@ -102,35 +109,32 @@ def denormalizeTheta():
     print("theta0:", theta0, " theta1:", theta1)
 
 
-def show_loss_graph(history_loss):
+def show_graph(data, history_loss):
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+
     iterations, losses = zip(*history_loss)
-    plt.plot(iterations, losses, 'b-', label="Loss Curve")
+    axes[1].plot(iterations, losses, 'b-', label="Loss Curve")
+    axes[1].set_xlabel("Iterations")
+    axes[1].set_ylabel("Loss Value")
+    axes[1].set_title("Evolution of the loss value through the iterations")
 
-    plt.xlabel("Iterations")
-    plt.ylabel("Loss Value")
-    plt.title("Evolution of the loss value through the iterations")
-    plt.legend()
-    plt.show()
-    plt.close()
-
-
-def show_graph(data):
-    
     for line in data:
         km, price = line
-        plt.plot(km, price, 'ro')
-
+        axes[0].plot(km, price, 'ro')
+    
     nb_points = 100
     x_line = [i *(max_x - 0) / nb_points for i in range (nb_points + 1)]
     y_line = [theta1 * x + theta0 for x in x_line]
-    plt.plot(x_line, y_line, color='red', label=f"y = {theta1}x + {theta0}")
+    axes[0].plot(x_line, y_line, color='red', label=f"y = {theta1}x + {theta0}")
+    axes[0].set_xlabel("Mileage")
+    axes[0].set_ylabel("Price")
+    axes[0].set_title("Price based on mileage")
 
 
-    plt.xlabel("Mileage")
-    plt.ylabel("Price")
-    plt.title("Prix en fonction du kilometrage")
+    plt.tight_layout()
     plt.show()
-    plt.close()
+
 
 if __name__ == "__main__":
     data = get_data()
@@ -142,6 +146,6 @@ if __name__ == "__main__":
     
     denormalizeTheta()
 
-    show_graph(data)
-    show_loss_graph(history_loss)
+    show_graph(data, history_loss)
+
 
