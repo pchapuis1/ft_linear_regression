@@ -7,6 +7,14 @@ max_x = 0
 min_y = 0
 max_y = 0
 
+theta0 = 0
+theta1 = 0
+
+learningRate = 0.01
+nb_iterations = 10000
+
+history_loss = []
+
 def get_data():
 
     file_path = 'data.csv'
@@ -64,16 +72,6 @@ def normalizeData(data):
 
     return data_normalized
 
-
-
-theta0 = 0
-theta1 = 0
-
-learningRate = 0.01
-nb_iterations = 10000
-
-history_loss = []
-
 def linear_regression(data):
     global theta0, theta1, learningRate
     m = len(data)
@@ -93,7 +91,6 @@ def linear_regression(data):
 
             error_history += error * error
 
-        print("progression of error:", prv_error_history - error_history)
         if abs(prv_error_history - error_history) < limit:
             break
         prv_error_history = error_history
@@ -135,6 +132,25 @@ def show_graph(data, history_loss):
     plt.tight_layout()
     plt.show()
 
+def store_theta():
+    file_path = 'theta.csv'
+
+    try:
+        csvfile = open(file_path, mode='w', newline='', encoding='utf-8')
+    except OSError:
+        print ("Could not read file:", file_path)
+        sys.exit()
+
+    with csvfile:
+        try:
+            writer = csv.writer(csvfile)
+            writer.writerow(['theta0', 'theta1'])
+            writer.writerow([theta0, theta1])
+        except csv.Error as e:
+            print("Error wrinting in csv file:", e)
+            sys.exit
+    return data
+
 
 if __name__ == "__main__":
     data = get_data()
@@ -145,7 +161,10 @@ if __name__ == "__main__":
     linear_regression(data_normalized)
     
     denormalizeTheta()
+    store_theta()
 
     show_graph(data, history_loss)
+
+
 
 
