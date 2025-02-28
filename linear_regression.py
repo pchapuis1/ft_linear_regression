@@ -51,9 +51,6 @@ class LinearRegression:
         self.min_x = self.max_x = self.data[0][0]
         self.min_y = self.max_y = self.data[0][1]
 
-        for line in self.data:
-            print(line[0], line[1])
-
         for mileage, price in self.data:
             if (mileage > self.max_x):
                 self.max_x = mileage
@@ -98,8 +95,6 @@ class LinearRegression:
     def denormalizeTheta(self):
         self.theta1 = self.theta1 * ((self.max_y - self.min_y) / (self.max_x - self.min_x))
         self.theta0 = self.theta0 * (self.max_y - self.min_y) - self.theta1 * self.min_x + self.min_y
-        print("theta0:", self.theta0, " theta1:", self.theta1)
-
 
     def show_graph(self):
         fig, axes = plt.subplots(1, 2, figsize=(10, 5))
