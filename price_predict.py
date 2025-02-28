@@ -9,6 +9,9 @@ def get_theta():
             datareader = csv.reader(csvfile, delimiter=',')
             next(datareader) 
             for line in datareader:
+                if len(line) != 2:
+                    print("Invalid line in theta file:", line)
+                    return None
                 try:
                     values = tuple(float(value) for value in line)
                     theta.append(values)

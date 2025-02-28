@@ -2,169 +2,158 @@ import csv
 import sys
 import matplotlib.pyplot as plt
 
-min_x = 0
-max_x = 0
-min_y = 0
-max_y = 0
+class LinearRegression:
+    def __init__(self):
+        self.theta0 = 0
+        self.theta1 = 0
+        self.learning_rate = 0.01
+        self.nb_iterations = 10000
+        self.min_x = 0
+        self.max_x = 0
+        self.min_y = 0
+        self.max_y = 0
+        self.history_loss = []
+        self.data = []
+        self.data_normalized = []
 
-theta0 = 0
-theta1 = 0
+    def get_data(self):
+        file_path = 'data.csv'
 
-learningRate = 0.01
-nb_iterations = 10000
-
-history_loss = []
-
-def get_data():
-
-    file_path = 'data.csv'
-
-    data = []
-
-    try:
-        csvfile = open(file_path, 'r')
-    except OSError:
-        print ("Could not read file:", file_path)
-        sys.exit()
-
-    with csvfile:
         try:
-            datareader = csv.reader(csvfile, delimiter = ',')
-            next(datareader)
-            for line in datareader:
+            with open(file_path, 'r') as csvfile:
                 try:
-                    values = tuple([int(value) for value in line])
-                    data.append(values)
-                except ValueError:
-                    print("Conversion error for line:", line)
-        except csv.Error as e:
-            print("Error reading csv file:", e)
-            sys.exit
-    return data
+                    datareader = csv.reader(csvfile, delimiter = ',')
+                    next(datareader)
+                    for line in datareader:
+                        if not any(line) or len(line) != 2:
+                            continue
+                        try:
+                            values = tuple([int(value) for value in line])
+                            self.data.append(values)
+                        except ValueError:
+                            print("Conversion error for line:", line)
+                except csv.Error as e:
+                    print("Error reading csv file:", e)
+                    sys.exit()
+        except OSError:
+            print ("Could not read file:", file_path)
+            sys.exit()
 
-def estimatedPrice(mileage):
-    return theta0 + theta1 * mileage
 
-def get_min_max(data):
-    global min_x, max_x, min_y, max_y
+    def estimatedPrice(self, mileage):
+        return self.theta0 + self.theta1 * mileage
 
-    min_x = max_x = data[0][0]
-    min_y = max_y = data[0][1]
+    def get_min_max(self):
+        if (len(self.data) < 2):
+            print("Error: Need at least 2 observations to train the model!")
+            sys.exit()
 
-    for mileage, price in data:
+        self.min_x = self.max_x = self.data[0][0]
+        self.min_y = self.max_y = self.data[0][1]
 
-        if (mileage > max_x):
-            max_x = mileage
-        if (price > max_y):
-            max_y = price
-        if (mileage < min_x):
-            min_x = mileage
-        if (price < min_y):
-            min_y = price
+        for line in self.data:
+            print(line[0], line[1])
 
-def normalizeData(data):
-    data_normalized = []
+        for mileage, price in self.data:
+            if (mileage > self.max_x):
+                self.max_x = mileage
+            if (price > self.max_y):
+                self.max_y = price
+            if (mileage < self.min_x):
+                self.min_x = mileage
+            if (price < self.min_y):
+                self.min_y = price
 
-    for mileage, price in data:
-        mileage_normalized = (mileage - min_x) / (max_x - min_x)
-        price_normalized = (price - min_y) / (max_y - min_y)
-        data_normalized.append((mileage_normalized, price_normalized))    
+    def normalizeData(self):
+        for mileage, price in self.data:
+            mileage_normalized = (mileage - self.min_x) / (self.max_x - self.min_x)
+            price_normalized = (price - self.min_y) / (self.max_y - self.min_y)
+            self.data_normalized.append((mileage_normalized, price_normalized))    
 
-    return data_normalized
+    def linear_regression(self):
+        m = len(self.data_normalized)
+        prv_error_history = 1000
+        limit = 1e-6
 
-def linear_regression(data):
-    global theta0, theta1, learningRate
-    m = len(data)
+        for i in range(self.nb_iterations):
+            tmp0 = 0
+            tmp1 = 0
+            error_history = 0
 
-    prv_error_history = 1000
-    limit = 1e-6
+            for mileage, price in self.data_normalized:
+                error = self.estimatedPrice(mileage) - price
+                tmp0 += error
+                tmp1 += error * mileage
 
-    for i in range(nb_iterations):
-        tmp0 = 0
-        tmp1 = 0
-        error_history = 0
+                error_history += error * error
 
-        for mileage, price in data:
-            error = estimatedPrice(mileage) - price
-            tmp0 += error
-            tmp1 += error * mileage
+            if abs(prv_error_history - error_history) < limit:
+                break
+            prv_error_history = error_history
+            self.history_loss.append((i, error_history))
 
-            error_history += error * error
-
-        if abs(prv_error_history - error_history) < limit:
-            break
-        prv_error_history = error_history
-        history_loss.append((i, error_history))
-
-        theta0 -= learningRate * (tmp0 / m)
-        theta1 -= learningRate * (tmp1 / m)
+            self.theta0 -= self.learning_rate * (tmp0 / m)
+            self.theta1 -= self.learning_rate * (tmp1 / m)
         
-def denormalizeTheta():
-    global theta0, theta1
-    theta1 = theta1 * ((max_y - min_y) / (max_x - min_x))
-    theta0 = theta0 * (max_y - min_y) - theta1 * min_x + min_y
-    print("theta0:", theta0, " theta1:", theta1)
+    def denormalizeTheta(self):
+        self.theta1 = self.theta1 * ((self.max_y - self.min_y) / (self.max_x - self.min_x))
+        self.theta0 = self.theta0 * (self.max_y - self.min_y) - self.theta1 * self.min_x + self.min_y
+        print("theta0:", self.theta0, " theta1:", self.theta1)
 
 
-def show_graph(data, history_loss):
-    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    def show_graph(self):
+        fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
+        iterations, losses = zip(*self.history_loss)
+        axes[1].plot(iterations, losses, 'b')
+        axes[1].set_xlabel("Iterations")
+        axes[1].set_ylabel("Loss Value")
+        axes[1].set_title("Evolution of the loss value through the iterations")
 
-    iterations, losses = zip(*history_loss)
-    axes[1].plot(iterations, losses, 'b-', label="Loss Curve")
-    axes[1].set_xlabel("Iterations")
-    axes[1].set_ylabel("Loss Value")
-    axes[1].set_title("Evolution of the loss value through the iterations")
+        for line in self.data:
+            km, price = line
+            axes[0].plot(km, price, 'ro')
+        
+        nb_points = 100
+        x_line = [i *(self.max_x - 0) / nb_points for i in range (nb_points + 1)]
+        y_line = [self.theta1 * x + self.theta0 for x in x_line]
+        axes[0].plot(x_line, y_line, 'r')
+        axes[0].set_xlabel("Mileage")
+        axes[0].set_ylabel("Price")
+        axes[0].set_title("Price based on mileage")
 
-    for line in data:
-        km, price = line
-        axes[0].plot(km, price, 'ro')
-    
-    nb_points = 100
-    x_line = [i *(max_x - 0) / nb_points for i in range (nb_points + 1)]
-    y_line = [theta1 * x + theta0 for x in x_line]
-    axes[0].plot(x_line, y_line, color='red', label=f"y = {theta1}x + {theta0}")
-    axes[0].set_xlabel("Mileage")
-    axes[0].set_ylabel("Price")
-    axes[0].set_title("Price based on mileage")
+        plt.tight_layout()
+        plt.show()
 
+    def store_theta(self):
+        file_path = 'theta.csv'
 
-    plt.tight_layout()
-    plt.show()
-
-def store_theta():
-    file_path = 'theta.csv'
-
-    try:
-        csvfile = open(file_path, mode='w', newline='', encoding='utf-8')
-    except OSError:
-        print ("Could not read file:", file_path)
-        sys.exit()
-
-    with csvfile:
         try:
-            writer = csv.writer(csvfile)
-            writer.writerow(['theta0', 'theta1'])
-            writer.writerow([theta0, theta1])
-        except csv.Error as e:
-            print("Error wrinting in csv file:", e)
-            sys.exit
-    return data
+            with open(file_path, mode='w', newline='') as csvfile:
+                try:
+                    writer = csv.writer(csvfile)
+                    writer.writerow(['theta0', 'theta1'])
+                    writer.writerow([self.theta0, self.theta1])
+                except csv.Error as e:
+                    print("Error wrinting in csv file:", e)
+                    sys.exit()
+        except OSError:
+            print ("Could not read file:", file_path)
+            sys.exit()
 
+def main():
+    linearRegression = LinearRegression()
 
-if __name__ == "__main__":
-    data = get_data()
+    linearRegression.get_data()
+    linearRegression.get_min_max()
+    linearRegression.normalizeData()
 
-    get_min_max(data)
-    data_normalized = normalizeData(data)
-
-    linear_regression(data_normalized)
+    # Train the model
+    linearRegression.linear_regression()
     
-    denormalizeTheta()
-    store_theta()
+    linearRegression.denormalizeTheta()
+    linearRegression.store_theta()
+    linearRegression.show_graph()
 
-    show_graph(data, history_loss)
-
-
-
-
+if  __name__ == "__main__":
+    main()
