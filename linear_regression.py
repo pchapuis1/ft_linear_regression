@@ -40,8 +40,8 @@ class LinearRegression:
             sys.exit()
 
 
-    def estimatedPrice(self, mileage):
-        return self.theta0 + self.theta1 * mileage
+    def estimatedPrice(self, km):
+        return self.theta0 + self.theta1 * km
 
     def get_min_max(self):
         if (len(self.data) < 2):
@@ -51,21 +51,21 @@ class LinearRegression:
         self.min_x = self.max_x = self.data[0][0]
         self.min_y = self.max_y = self.data[0][1]
 
-        for mileage, price in self.data:
-            if (mileage > self.max_x):
-                self.max_x = mileage
+        for km, price in self.data:
+            if (km > self.max_x):
+                self.max_x = km
             if (price > self.max_y):
                 self.max_y = price
-            if (mileage < self.min_x):
-                self.min_x = mileage
+            if (km < self.min_x):
+                self.min_x = km
             if (price < self.min_y):
                 self.min_y = price
 
     def normalizeData(self):
-        for mileage, price in self.data:
-            mileage_normalized = (mileage - self.min_x) / (self.max_x - self.min_x)
+        for km, price in self.data:
+            km_normalized = (km - self.min_x) / (self.max_x - self.min_x)
             price_normalized = (price - self.min_y) / (self.max_y - self.min_y)
-            self.data_normalized.append((mileage_normalized, price_normalized))    
+            self.data_normalized.append((km_normalized, price_normalized))    
 
     def linear_regression(self):
         m = len(self.data_normalized)
@@ -77,11 +77,10 @@ class LinearRegression:
             tmp1 = 0
             error_history = 0
 
-            for mileage, price in self.data_normalized:
-                error = self.estimatedPrice(mileage) - price
+            for km, price in self.data_normalized:
+                error = self.estimatedPrice(km) - price
                 tmp0 += error
-                tmp1 += error * mileage
-
+                tmp1 += error * km
                 error_history += error * error
 
             if abs(prv_error_history - error_history) < limit:
@@ -113,9 +112,9 @@ class LinearRegression:
         x_line = [i *(self.max_x - 0) / nb_points for i in range (nb_points + 1)]
         y_line = [self.theta1 * x + self.theta0 for x in x_line]
         axes[0].plot(x_line, y_line, 'r')
-        axes[0].set_xlabel("Mileage")
+        axes[0].set_xlabel("Kilometers")
         axes[0].set_ylabel("Price")
-        axes[0].set_title("Price based on mileage")
+        axes[0].set_title("Price based on km")
 
         plt.tight_layout()
         plt.show()

@@ -18,26 +18,23 @@ def get_theta():
                 except ValueError:
                     print("Conversion error for line:", line)
     except (OSError, csv.Error) as e:
-        print("Error reading csv file:", e)
         return None
-
     return theta if theta else None
 
 theta = get_theta()
 if theta is None:
-    print("Could not load theta values.")
-    exit(1)
+    theta = [(0.0, 0.0)]
 
 while True:
-    mileage_asked = input("Enter mileage: ")
+    km_asked = input("Enter mileage: ")
     try:
-        mileage_float = float(mileage_asked)
-        if mileage_float > 0:
+        km_value = float(km_asked)
+        if km_value > 0:
             break
         else:
             print("The mileage can't be negative.")
     except ValueError:
         print("Enter a valid number.")
 
-price_predicted = theta[0][0] + mileage_float * theta[0][1]
+price_predicted = theta[0][0] + km_value * theta[0][1]
 print("The price predicted is:", price_predicted)
